@@ -72,10 +72,16 @@ jobs:
           version: 'latest'
           
       - name: Set Kubernetes Context
-        uses: azure/k8s-set-context@v4
-        with:
-          method: kubeconfig
-          kubeconfig: ${{ secrets.KUBECONFIG }}
+        env:
+          KUBE_CONFIG_DATA: ${{ secrets.KUBECONFIG }}
+        run: |
+          mkdir -p $HOME/.kube
+          if [[ "$KUBE_CONFIG_DATA" == "apiVersion"* ]]; then
+            echo "$KUBE_CONFIG_DATA" > $HOME/.kube/config
+          else
+            echo "$KUBE_CONFIG_DATA" | base64 -d --ignore-garbage > $HOME/.kube/config
+          fi
+          chmod 600 $HOME/.kube/config
 
       - name: Deploy to cluster
         env:
