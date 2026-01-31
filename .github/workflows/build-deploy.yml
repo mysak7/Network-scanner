@@ -115,6 +115,19 @@ jobs:
           kubectl rollout status deployment/dashboard -n default --timeout=5m
           
       - name: Verify deployment
+        if: always()
         run: |
           kubectl get pods -n default
           kubectl get svc -n default
+
+      - name: Debug Failure
+        if: failure()
+        run: |
+          echo "Describing pods:"
+          kubectl describe pods -n default
+          echo "Dashboard logs:"
+          kubectl logs -l app=dashboard -n default --tail=100 --all-containers=true || echo "Failed to get dashboard logs"
+          echo "Scanner logs:"
+          kubectl logs -l app=scanner -n default --tail=100 --all-containers=true || echo "Failed to get scanner logs"
+          echo "Redis logs:"
+          kubectl logs -l app=redis -n default --tail=100 --all-containers=true || echo "Failed to get redis logs"
