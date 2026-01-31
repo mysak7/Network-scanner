@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: dashboard
-        image: ghcr.io/${GITHUB_REPOSITORY}/dashboard:${IMAGE_TAG:-latest}
+        image: ghcr.io/${GITHUB_REPOSITORY}/dashboard:${IMAGE_TAG}
         ports:
         - containerPort: 8000
         livenessProbe:

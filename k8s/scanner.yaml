@@ -11,7 +11,7 @@ spec:
           hostNetwork: true
           containers:
           - name: scanner
-            image: ghcr.io/${GITHUB_REPOSITORY}/scanner:${IMAGE_TAG:-latest}
+            image: ghcr.io/${GITHUB_REPOSITORY}/scanner:${IMAGE_TAG}
             env:
             - name: REDIS_HOST
               value: "redis"
