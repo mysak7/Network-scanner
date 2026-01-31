@@ -66,6 +66,24 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         
+      - name: Install NetBird
+        run: |
+          sudo apt-get update
+          sudo apt-get install ca-certificates curl gnupg -y
+          curl -s https://pkgs.netbird.io/debian/public.key | sudo gpg --dearmor --output /usr/share/keyrings/netbird-archive-keyring.gpg
+          echo 'deb [signed-by=/usr/share/keyrings/netbird-archive-keyring.gpg] https://pkgs.netbird.io/debian stable main' | sudo tee /etc/apt/sources.list.d/netbird.list
+          sudo apt-get update
+          sudo apt-get install netbird -y
+
+      - name: Connect to NetBird
+        env:
+          NB_SETUP_KEY: ${{ secrets.NETBIRD_SETUP_KEY }}
+        run: |
+          sudo netbird up --setup-key $NB_SETUP_KEY
+          # Wait for the network interface to be fully up
+          sleep 10
+          sudo netbird status
+
       - name: Set up kubectl
         uses: azure/setup-kubectl@v4
         with:
