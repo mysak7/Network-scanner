@@ -1,0 +1,23 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: network-scanner
+spec:
+  schedule: "*/5 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          hostNetwork: true
+          containers:
+          - name: scanner
+            image: ghcr.io/${GITHUB_REPOSITORY}/scanner:${IMAGE_TAG:-latest}
+            env:
+            - name: REDIS_HOST
+              value: "redis"
+            - name: SCAN_NETWORK
+              valueFrom:
+                configMapKeyRef:
+                  name: scanner-config
+                  key: network
+          restartPolicy: OnFailure
