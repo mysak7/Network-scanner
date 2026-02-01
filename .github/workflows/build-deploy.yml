@@ -124,6 +124,16 @@ jobs:
           
           echo "KUBECONFIG=$HOME/.kube/config" >> $GITHUB_ENV
 
+      - name: Configure Image Pull Secret
+        run: |
+          kubectl create secret docker-registry ghcr-secret \
+            --docker-server=ghcr.io \
+            --docker-username=${{ github.actor }} \
+            --docker-password=${{ secrets.GITHUB_TOKEN }} \
+            --dry-run=client -o yaml | kubectl apply -f -
+          
+          kubectl patch serviceaccount default -p '{"imagePullSecrets": [{"name": "ghcr-secret"}]}'
+
       - name: Deploy to cluster
         env:
           IMAGE_TAG: ${{ github.sha }}
@@ -133,6 +143,9 @@ jobs:
           echo "Debugging connectivity..."
           kubectl config view
           kubectl cluster-info || echo "Failed to get cluster info"
+          
+          echo "DEBUG: Verifying scanner.yaml content after envsubst:"
+          envsubst < k8s/scanner.yaml
           
           envsubst < k8s/scanner.yaml | kubectl apply -f -
           envsubst < k8s/dashboard.yaml | kubectl apply -f -
