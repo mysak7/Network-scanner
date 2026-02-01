@@ -25,8 +25,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Lowercase IMAGE_PREFIX
-        run: echo "IMAGE_PREFIX=${IMAGE_PREFIX,,}" >> ${GITHUB_ENV}
+      - name: Lowercase Image Repo
+        run: echo "IMAGE_REPO_LOWER=${IMAGE_PREFIX,,}" >> ${GITHUB_ENV}
         
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -42,7 +42,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ matrix.component }}
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_REPO_LOWER }}/${{ matrix.component }}
           tags: |
             type=sha,prefix={{branch}}-
             type=ref,event=branch
@@ -69,9 +69,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Lowercase GITHUB_REPOSITORY
-        run: echo "GITHUB_REPOSITORY=${GITHUB_REPOSITORY,,}" >> ${GITHUB_ENV}
-        
       - name: Install NetBird
         run: |
           sudo apt-get update
@@ -111,6 +108,7 @@ jobs:
         env:
           IMAGE_TAG: ${{ github.sha }}
         run: |
+          export GITHUB_REPOSITORY=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')
           envsubst < k8s/scanner.yaml | kubectl apply -f -
           envsubst < k8s/dashboard.yaml | kubectl apply -f -
           kubectl apply -f k8s/redis.yaml
