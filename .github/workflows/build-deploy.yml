@@ -101,7 +101,7 @@ jobs:
           fi
           chmod 600 $HOME/.kube/config
 
-      - name: Deploy to cluster
+      - name: Deploy to cluster 
         env:
           IMAGE_TAG: ${{ github.sha }}
           GITHUB_REPOSITORY: ${{ github.repository }}
