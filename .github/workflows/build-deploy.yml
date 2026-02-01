@@ -86,6 +86,7 @@ jobs:
           # Wait for the network interface to be fully up
           sleep 10
           sudo netbird status
+          ip addr show
 
       - name: Set up kubectl
         uses: azure/setup-kubectl@v4
@@ -97,18 +98,42 @@ jobs:
           KUBE_CONFIG_DATA: ${{ secrets.KUBECONFIG }}
         run: |
           mkdir -p $HOME/.kube
+          echo "Checking KUBE_CONFIG_DATA length: ${#KUBE_CONFIG_DATA}"
+          if [[ -z "$KUBE_CONFIG_DATA" ]]; then
+            echo "Error: KUBE_CONFIG_DATA is empty"
+            exit 1
+          fi
+
           if [[ "$KUBE_CONFIG_DATA" == "apiVersion"* ]]; then
+            echo "Detected plain text config"
             echo "$KUBE_CONFIG_DATA" > $HOME/.kube/config
           else
+            echo "Detected base64 encoded config"
             echo "$KUBE_CONFIG_DATA" | base64 -d --ignore-garbage > $HOME/.kube/config
           fi
           chmod 600 $HOME/.kube/config
+          
+          echo "Verifying kubeconfig file:"
+          ls -la $HOME/.kube/config
+          if [[ ! -s $HOME/.kube/config ]]; then
+             echo "Error: kubeconfig file is empty"
+             exit 1
+          fi
+          echo "Checking server URL in kubeconfig:"
+          grep "server:" $HOME/.kube/config || echo "Server not found in config"
+          
+          echo "KUBECONFIG=$HOME/.kube/config" >> $GITHUB_ENV
 
       - name: Deploy to cluster
         env:
           IMAGE_TAG: ${{ github.sha }}
         run: |
           export GITHUB_REPOSITORY=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')
+          
+          echo "Debugging connectivity..."
+          kubectl config view
+          kubectl cluster-info || echo "Failed to get cluster info"
+          
           envsubst < k8s/scanner.yaml | kubectl apply -f -
           envsubst < k8s/dashboard.yaml | kubectl apply -f -
           kubectl apply -f k8s/redis.yaml
